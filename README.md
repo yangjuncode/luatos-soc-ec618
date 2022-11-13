@@ -1,5 +1,8 @@
 # luatos-csdk-ec618
 
+#### 文档中心
+[CSDK软件开发资料](https://doc.openluat.com/wiki/37?wiki_page_id=4544)
+
 #### 介绍
 CSDK for EC618, 适用于所有基于EC618的合宙模组, 例如Air780E系列, Air600E系列
 
