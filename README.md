@@ -1,4 +1,4 @@
-# luatos-csdk-ec618
+# CSDK for EC618
 
 #### 文档中心
 [CSDK软件开发资料](https://doc.openluat.com/wiki/37?wiki_page_id=4544)
