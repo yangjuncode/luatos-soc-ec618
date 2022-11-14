@@ -132,8 +132,7 @@ add_asflags("-Wl,--cref -Wl,--check-sections -Wl,--gc-sections -lm -Wl,--print-m
 -- ==============================
 -- === includes =====
 
-add_includedirs(SDK_TOP .. "/PLAT/middleware/developed/psnv/src", 
-                SDK_TOP .. "/PLAT/middleware/developed/psnv/src",
+add_includedirs(
                 SDK_TOP .. "/PLAT/device/target/board/common/ARMCM3/inc",
                 SDK_TOP .. "/PLAT/device/target/board/ec618_0h00/common/inc",
                 SDK_TOP .. "/PLAT/device/target/board/ec618_0h00/ap/gcc",
