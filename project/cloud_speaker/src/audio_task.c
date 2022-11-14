@@ -119,10 +119,9 @@ void audio_task(void *param)
 void audio_task_init(void)
 {
     luat_rtos_timer_create(&g_s_delay_timer);
+
     luat_gpio_cfg_t gpio_cfg;
 	luat_gpio_set_default_cfg(&gpio_cfg);
-	luat_rtos_task_handle task_handle;
-
 
 	gpio_cfg.pull = LUAT_GPIO_DEFAULT;
 	gpio_cfg.pin = PA_PWR_PIN;
@@ -132,7 +131,6 @@ void audio_task_init(void)
 	gpio_cfg.alt_fun = CODEC_PWR_PIN_ALT_FUN;
 	luat_gpio_open(&gpio_cfg);
 
-    
     luat_audio_play_global_init(audio_event_cb, audio_data_cb, luat_audio_play_file_default_fun, luat_audio_play_tts_default_fun, NULL);
     ivCStrA sdk_id = AISOUND_SDK_USERID_16K;
     luat_audio_play_tts_set_resource(ivtts_16k, sdk_id, NULL);

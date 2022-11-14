@@ -33,7 +33,7 @@
 
 static luat_rtos_semaphore_t net_semaphore_handle;
 static luat_rtos_task_handle mqtt_task_handle;
-extern QueueHandle_t audioQueueHandle;
+extern luat_rtos_queue_t audioQueueHandle;
 
 #define MQTT_HOST    	"lbsmqtt.airm2m.com"   				// MQTT服务器的地址和端口号
 #define MQTT_PORT		 1884
@@ -117,8 +117,16 @@ int fomatMoney(int num, audioQueueData *data, int *index, BOOL flag)
         if (flag)
         {
             data->message.file.info[*index].path = NULL; 
-            data->message.file.info[*index].address = audioArray[thousand][0];
-            data->message.file.info[*index].rom_data_len = audioArray[thousand][1];
+            if(2 == thousand)
+            {
+                data->message.file.info[*index].address = audioliang;
+                data->message.file.info[*index].rom_data_len = audioliangSize;
+            }
+            else
+            {
+                data->message.file.info[*index].address = audioArray[thousand][0];
+                data->message.file.info[*index].rom_data_len = audioArray[thousand][1];
+            }
         }
         *index += 1;
         if (flag)
@@ -134,8 +142,16 @@ int fomatMoney(int num, audioQueueData *data, int *index, BOOL flag)
         if(flag)
         {
             data->message.file.info[*index].path = NULL; 
-            data->message.file.info[*index].address = audioArray[hundred][0];
-            data->message.file.info[*index].rom_data_len = audioArray[hundred][1];
+            if(2 == hundred)
+            {
+                data->message.file.info[*index].address = audioliang;
+                data->message.file.info[*index].rom_data_len = audioliangSize;
+            }
+            else
+            {
+                data->message.file.info[*index].address = audioArray[hundred][0];
+                data->message.file.info[*index].rom_data_len = audioArray[hundred][1];
+        }
         }
         *index += 1;
         if(flag)
@@ -223,9 +239,13 @@ static int strToFile(char *money, audioQueueData *data, int *index, bool flag)
     if (integer >= 10000)
     {
         int filecount = fomatMoney(integer / 10000, data, index, flag);
-        //TODO 待处理两万
         if (flag)
         {
+            if((2 == *index) && (data->message.file.info[1].address == audio2))
+            {
+                data->message.file.info[1].address = audioliang;
+                data->message.file.info[1].rom_data_len = sizeof(audioliang);
+            }
             data->message.file.info[*index].path = NULL; 
             data->message.file.info[*index].address = audio10000;
             data->message.file.info[*index].rom_data_len = sizeof(audio10000);
@@ -245,16 +265,6 @@ static int strToFile(char *money, audioQueueData *data, int *index, bool flag)
     if ((integer % 10000) > 0)
     {
         int filecount = fomatMoney(integer % 10000, data, index, flag);
-        //TODO 待处理两千
-        // if()
-        // if (flag)
-        // {
-        //     data->message.file.info[*index].path = NULL; 
-        //     data->message.file.info[*index].address = audioK;
-        //     data->message.file.info[*index].rom_data_len = sizeof(audioK);
-        // }
-        // *index += 1;
-        // count += filecount;
     }
     if (*index == 1)
     {
@@ -505,7 +515,8 @@ static void mqttclient_task_init(void){
     int result = luat_rtos_task_create(&mqtt_task_handle, 4096, 20, "mqtt", mqtt_demo, NULL, NULL);
     LUAT_DEBUG_PRINT("cloud_speaker_mqtt create task result %d", result);
 }
-
+extern void led_task_init(void);
 INIT_TASK_EXPORT(mqttclient_task_init, "2");
 INIT_TASK_EXPORT(audio_task_init, "2");
+INIT_TASK_EXPORT(led_task_init, "2");
 
