@@ -129,6 +129,10 @@ target(TARGET_NAME)
     -- iotauth
     add_files(LUATOS_ROOT.."components/iotauth/luat_lib_iotauth.c")
 
+    -- mobile
+    add_includedirs(LUATOS_ROOT.."components/mobile")
+    add_files(LUATOS_ROOT.."components/mobile/*.c")
+
     ------------------------------------------------------------
     ------------------------------------------------------------
 

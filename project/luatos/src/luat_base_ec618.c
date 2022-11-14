@@ -1,6 +1,7 @@
 #include "common_api.h"
 #include "luat_base.h"
 #include "luat_msgbus.h"
+#include "luat_malloc.h"
 #include "luat_fs.h"
 #include "luat_timer.h"
 #include <stdlib.h>
@@ -11,6 +12,9 @@
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
 #include "mbedtls/md5.h"
+
+#define LUAT_LOG_TAG "base"
+#include "luat_log.h"
 
 #ifdef LUAT_USE_LVGL
 #include "lvgl.h"
@@ -47,6 +51,7 @@ static const luaL_Reg loadedlibs[] = {
   {"log",     luaopen_log},               // 日志库
   {"timer",   luaopen_timer},             // 延时库
 //-----------------------------------------------------------------------
+  {"mobile", luaopen_mobile},
 #ifdef LUAT_USE_NETWORK
   {"socket", luaopen_socket_adapter},
   {"mqtt", luaopen_mqtt},
@@ -272,8 +277,9 @@ void DBG_HexPrintf(void *Data, unsigned int len)
     uint32_t i,j;
     j = 0;
     if (!len) return;
-    uart_buf = luat_heap_zalloc(len * 3 + 2);
+    uart_buf = luat_heap_malloc(len * 3 + 2);
     if (!uart_buf) return;
+    memset(uart_buf, 0, len * 3 + 2);
     for (i = 0; i < len; i++){
 		uart_buf[j++] = ByteToAsciiTable[(data[i] & 0xf0) >> 4];
 		uart_buf[j++] = ByteToAsciiTable[data[i] & 0x0f];
