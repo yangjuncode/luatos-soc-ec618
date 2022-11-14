@@ -24,11 +24,6 @@
 #include "luat_debug.h"
 
 
-typedef enum
-{
-	LUAT_FOTA_DWNLD_MOD_FTP,
-	LUAT_FOTA_DWNLD_MOD_HTTP
-}amFotaDwnldMod;
 
 #define LUAT_OTA_HEAD 0x7e
 #define LUAT_OTA_APP_HEAD 0X7c
@@ -108,4 +103,29 @@ int luat_fota_write(luat_fota_img_proc_ctx_ptr context, void *data, int len)
 	return 0;
 }
 
+int luat_fota_done(luat_fota_img_proc_ctx_ptr context)
+{
+    FotaDefChkDeltaState_t    chkDelta = {0};
+    FotaDefChkBaseImage_t      chkBase = {0};
+    do
+    {
+        fotaNvmDoExtension(FOTA_DEF_CHK_DELTA_STATE, (void*)&chkDelta);
+        if(!chkDelta.isValid)
+        {
+            LUAT_DEBUG_PRINT("validate delta err! errno(%d)", chkDelta.state);
+			return -1;
+        }
+        else
+        {
+            LUAT_DEBUG_PRINT("validate delta ok!");
+            fotaNvmDoExtension(FOTA_DEF_CHK_BASE_IMAGE, (void*)&chkBase);
+            if(!chkBase.isMatched)
+            {
+                LUAT_DEBUG_PRINT("however, base fw is unmatched!");
+				return -1;
+            }
+        }
+    }while(0);
+	return 0;
+}
 

@@ -26,24 +26,6 @@
  * @{
  */
 
-/**
- * @brief 升级包下载状态。
- * 
- */
-typedef enum
-{
-	LUAT_FOTA_SETFLAG = 2,/**<开始下载*/
-	LUAT_FOTA_INPROGRESS = 1,/**<正在下载*/
-	LUAT_FOTA_SUCCEED = 0,/**<下载成功*/
-	LUAT_FOTA_FAIL = -1 /**<下载失败*/
-}LUAT_FOTA_STA_E;
-
-/**
- * @brief 下载进度。
- * 
- */
-typedef void (* luat_fota_Progress_t)(LUAT_FOTA_STA_E sta, int progress, char* buff, int len);
-
 
 /**
  * @brief 升级包数据的上下文结构体
@@ -73,9 +55,9 @@ int luat_fota_write(luat_fota_img_proc_ctx_ptr context, void * data, int len);
 /**
  * @brief 用于结束升级包下载
  * 
- * @param 
+ * @param context - 上下文结构体指针
  * @return int =0成功，其他失败
  */
-int luat_fota_done(void);
+int luat_fota_done(luat_fota_img_proc_ctx_ptr context);
 /** @}*/
 #endif
