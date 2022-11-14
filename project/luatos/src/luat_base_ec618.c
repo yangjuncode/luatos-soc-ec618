@@ -146,12 +146,6 @@ static const luaL_Reg loadedlibs[] = {
 #ifdef LUAT_USE_STATEM
   {"statem",    luaopen_statem},
 #endif
-#ifdef LUAT_USE_GTFONT
-  {"gtfont",    luaopen_gtfont},
-#endif
-#ifdef LUAT_USE_NIMBLE
-  {"nimble",    luaopen_nimble},
-#endif
 #ifdef LUAT_USE_FDB
   {"fdb",       luaopen_fdb},
 #endif
@@ -175,9 +169,6 @@ static const luaL_Reg loadedlibs[] = {
 #endif
 #ifdef LUAT_USE_YMODEM
   {"ymodem", luaopen_ymodem},
-#endif
-#ifdef LUAT_USE_I2S
-  {"i2s", luaopen_i2s},
 #endif
 #ifdef LUAT_USE_LORA
   {"lora", luaopen_lora},

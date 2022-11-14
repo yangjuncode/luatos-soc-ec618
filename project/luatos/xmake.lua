@@ -68,6 +68,10 @@ target(TARGET_NAME)
     add_includedirs(LUATOS_ROOT.."components/fatfs")
     add_files(LUATOS_ROOT.."components/fatfs/**.c")
 
+    -- libgnss
+    add_includedirs(LUATOS_ROOT .. "components/minmea")
+    add_files(LUATOS_ROOT.."components/minmea/**.c")
+
     --------------------------------------------------------------
     -- UI类的,能不能用另说, 先加上吧
     
