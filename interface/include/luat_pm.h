@@ -178,11 +178,6 @@ int luat_pm_reboot(void);
 
 /* --------------------------------------------- vbat/vbus begin--------------------------------------------- */
 /**
- * @brief 获取电池电压
- * @param volt 获取到的电压
- */
-int luat_pm_get_battery_volt(uint16_t *volt);
-/**
  * @brief 获取充电器状态
  * @param status 充电器状态
  */

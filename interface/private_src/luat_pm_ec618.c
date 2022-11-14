@@ -20,12 +20,10 @@
  */
 
 #include "luat_pm.h"
+#include "FreeRTOS.h"
 #include "apmu_external.h"
 #include "slpman.h"
-#include "FreeRTOS.h"
-#include "list.h"
-
-
+#include "reset.h"
 
 static uint32_t reportMode[LUAT_PM_SLEEP_MODE_LIGHT + 1][10] = {0};
 
@@ -117,15 +115,6 @@ int luat_pm_get_sleep_mode(const char *vote_tag)
     return -1;
 }
 
-
-
-/* typedef struct luat_pm_callback
-{
-    xLIST list;
-    xLIST_ITEM callback[5];
-}luat_pm_callback_t;
- */
-
 static luat_pm_sleep_callback_t g_s_user_pre_callback = NULL;
 static luat_pm_sleep_callback_t g_s_user_post_callback = NULL;
 
@@ -190,26 +179,30 @@ int luat_pm_wakeup_pad_set(uint8_t enable, LUAT_PM_WAKEUP_PAD_E source_id, luat_
         NVIC_DisableIRQ(source_id);
     return 0;
 }
+
 int luat_pm_get_poweron_reason(void)
 {
     return 0;
 }
+
 int luat_pm_poweroff(void)
 {
+    pwrKeyStartPowerOff();
     return 0;
 }
+
 int luat_pm_reboot(void)
 {
+    ResetECSystemReset();
     return 0;
 }
-int luat_pm_get_battery_volt(uint16_t *volt)
-{
-    return 0;
-}
+
 int luat_pm_get_vbus_status(uint8_t *status)
 {
+    *status = usb_portmon_vbuspad_level();
     return 0;
 }
+
 int luat_pm_event_register_handler(luat_pm_event_callback_t callback_fun)
 {
     return 0;

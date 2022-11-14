@@ -47,6 +47,7 @@ luat_pm_wakeup_pad_isr_callback_t pad_wakeup_callback(LUAT_PM_WAKEUP_PAD_E num)
 
 static void task_test_pm(void *param)
 {
+    luat_rtos_task_sleep(20000);
     luat_pm_wakeup_pad_set_callback(pad_wakeup_callback);
     luat_pm_wakeup_pad_cfg_t cfg = {0};
     cfg.neg_edge_enable = 1;
@@ -56,6 +57,10 @@ static void task_test_pm(void *param)
     luat_pm_wakeup_pad_set(1, LUAT_PMWAKEUP_PAD_3, &cfg);
     while (1)
     {
+        //获取vbus插入状态
+        uint8_t status;
+        LUAT_DEBUG_PRINT("pm demo get vbus status %d %d", luat_pm_get_vbus_status(&status), status);
+
         //注册休眠前回调函数
         luat_pm_sleep_register_pre_handler(sleep_pre_callback);
 
@@ -94,6 +99,13 @@ static void task_test_pm(void *param)
         //解注册唤醒后回调函数
         luat_pm_sleep_deregister_post_handler();
         luat_rtos_task_sleep(5000);
+
+        // 打开此行注释测试关机
+        // luat_pm_poweroff();
+
+
+        // 打开此行注释测试重启
+        // luat_pm_reboot();
     }
 }
 
