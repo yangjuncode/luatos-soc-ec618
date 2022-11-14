@@ -9,8 +9,8 @@ target(TARGET_NAME)
     add_defines("LUAT_USE_KV")
     
     --加入代码和头文件
-    add_includedirs("/inc",{public = true})
-    add_files("/src/*.c",{public = true})
+    add_includedirs("./inc",{public = true})
+    add_files("./src/*.c",{public = true})
 
     --add_files("../../thirdparty/fal/src/*.c",{public = true})
     --add_files("../../thirdparty/flashdb/src/*.c",{public = true})

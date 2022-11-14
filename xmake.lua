@@ -304,8 +304,8 @@ target(USER_PROJECT_NAME..".elf")
 	)
 
     if USER_PROJECT_NAME ~= 'luatos' then
-        add_files("/thirdparty/fal/src/*.c",{public = true})
-        add_files("/thirdparty/flashdb/src/*.c",{public = true})
+        add_files(SDK_TOP.."/thirdparty/fal/src/*.c",{public = true})
+        add_files(SDK_TOP.."/thirdparty/flashdb/src/*.c",{public = true})
     else
         remove_files(SDK_TOP .. "/interface/src/luat_kv_ec618.c"
 	)

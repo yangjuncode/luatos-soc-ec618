@@ -9,10 +9,10 @@ target(TARGET_NAME)
     set_targetdir(LIB_DIR)
     
     --加入代码和头文件
-    add_includedirs("/inc",{public = true})
+    add_includedirs("./inc",{public = true})
     add_includedirs(SDK_TOP .. "/interface/private_include", 
                     {public = true})
-    add_files("/src/*.c",{public = true})
+    add_files("./src/*.c",{public = true})
     add_files(SDK_TOP .. "interface/src/*.c",{public = true})
 	
     add_includedirs(LUATOS_ROOT .. "lua/include")
