@@ -25,6 +25,9 @@
 #include "luat_mem.h"
 #include "luat_debug.h"
 
+luat_rtos_task_handle task1_handle;
+luat_rtos_task_handle task2_handle;
+
 
 static void hw_demoA_init(void)
 {
@@ -66,12 +69,12 @@ static void task2(void *param)
 
 static void task_demoE_init(void)
 {
-	luat_rtos_task_create(NULL, 256, 50, "", task1, NULL, 0);
+	luat_rtos_task_create(&task1_handle, 2*1024, 50, "task1", task1, NULL, 0);
 }
 
 static void task_demoF_init(void)
 {
-	luat_rtos_task_create(NULL, 256, 50, "", task2, NULL, 0);
+	luat_rtos_task_create(&task2_handle, 2*1024, 50, "task2", task2, NULL, 0);
 }
 
 //启动hw_demoA_init，启动位置硬件初始1级
