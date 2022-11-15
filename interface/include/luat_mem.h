@@ -22,6 +22,13 @@
 #ifndef LUAT_MEM_H
 #define LUAT_MEM_H
 
+#include "stdint.h"
+
+void* luat_heap_malloc(size_t len);
+void  luat_heap_free(void* ptr);
+void* luat_heap_realloc(void* ptr, size_t len);
+void* luat_heap_calloc(size_t count, size_t _size);
+
 
 #define LUAT_MEM_MALLOC luat_heap_malloc
 #define LUAT_MEM_FREE luat_heap_free
