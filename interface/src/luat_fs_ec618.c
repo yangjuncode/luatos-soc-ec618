@@ -25,87 +25,187 @@
 #include "luat_fs.h"
 #include "osasys.h"
 #include "lfs_port.h"
+#include "luat_rtos.h"
 
+#ifdef __LUATOS__
+#include "luat_malloc.h"
+#define LUAT_LOG_TAG "fs"
+#include "luat_log.h"
 #include "mem_map.h"
+#else
+#include "luat_mem.h"
+#endif
 
 
-#ifdef LUAT_USE_FS_VFS
+static inline const char* check_path(const char* path) {
+    if (path == NULL || strlen(path) < 2)
+        return NULL;
+    const char* dst = path;
+    if (dst[0] == '/')
+        dst = path + 1;
+    size_t len = strlen(dst);
+    for (size_t i = 0; i < len; i++)
+    {
+        if (dst[i] == '/')
+            return NULL; // 不支持文件夹操作
+    }
+    return dst;
+} 
+
+
+// #ifdef LUAT_USE_FS_VFS
+// #if 1
 
 FILE* luat_vfs_ec618_fopen(void* userdata, const char *filename, const char *mode) {
-    FILE* f = (FILE*)OsaFopen(filename, mode);
-    //DBG("luat_fs_fopen %s %s %p", filename, mode, f);
-    return f;
+    int flag = 0;
+    const char* dst = check_path(filename);
+    if (dst == NULL)
+        return NULL;
+    //LLOGD("luat_fs_fopen %s %s", filename, mode);
+    lfs_file_t *file = (lfs_file_t*)luat_heap_malloc(sizeof(lfs_file_t));
+    if (NULL == file) {
+        //LLOGE("out of memory when open file");
+        return NULL;
+    }
+/*
+"r": 读模式（默认）；
+"w": 写模式；
+"a": 追加模式；
+"r+": 更新模式，所有之前的数据都保留；
+"w+": 更新模式，所有之前的数据都删除；
+"a+": 追加更新模式，所有之前的数据都保留，只允许在文件尾部做写入。
+*/
+    if (!strcmp("r+", mode) || !strcmp("r+b", mode) || !strcmp("rb+", mode)) {
+        flag = LFS_O_RDWR | LFS_O_CREAT;
+    }
+    else if(!strcmp("w+", mode) || !strcmp("w+b", mode) || !strcmp("wb+", mode)) {
+        flag = LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC;
+    }
+    else if(!strcmp("a+", mode) || !strcmp("a+b", mode) || !strcmp("ab+", mode)) {
+        flag = LFS_O_APPEND | LFS_O_CREAT;
+    }
+    else if(!strcmp("w", mode) || !strcmp("wb", mode)) {
+        flag = LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC;
+    }
+    else if(!strcmp("r", mode) || !strcmp("rb", mode)) {
+        flag = LFS_O_RDONLY;
+    }
+    else if(!strcmp("a", mode) || !strcmp("ab", mode)) {
+        flag = LFS_O_APPEND | LFS_O_CREAT;
+    }
+    else {
+        //LLOGW("bad file open mode %s, fallback to 'r'", mode);
+        flag = LFS_O_RDONLY;
+    }
+    int ret = LFS_fileOpen(file, dst, flag);
+    //LLOGD("luat_fs_fopen %s %s ret %d", filename, mode, ret);
+    if (ret == LFS_ERR_OK) {
+        return (FILE*)file;
+    }
+    luat_heap_free(file);
+    return NULL;
 }
 
 int luat_vfs_ec618_getc(void* userdata, FILE* stream) {
     char buff[1];
     buff[0] = 0;
-    OsaFread(buff, 1, 1, stream);
-    return buff[0];
+    int ret = LFS_fileRead((lfs_file_t*)stream, buff, 1);
+    if (ret == 1)
+        return buff[0];
+    return -1;
 }
 
 int luat_vfs_ec618_fseek(void* userdata, FILE* stream, long int offset, int origin) {
     //DBG("luat_fs_fseek fd=%p offset=%ld ori=%ld", stream, offset, origin);
-    return OsaFseek(stream, offset, origin);
+    return LFS_fileSeek((lfs_file_t*)stream, offset, origin);
 }
 
 int luat_vfs_ec618_ftell(void* userdata, FILE* stream) {
     //DBG("luat_fs_ftell fd=%ld", stream);
-    //return OsaFseek(stream, 0, SEEK_CUR);
     return LFS_fileTell((lfs_file_t *)stream);
 }
 
 int luat_vfs_ec618_fclose(void* userdata, FILE* stream) {
-    //DBG("luat_fs_fclose fd=%p", stream);
-    return OsaFclose(stream);
+    if (stream == NULL)
+        return 0;
+    LFS_fileClose((lfs_file_t *)stream);
+    free(stream);
+    return 0;
 }
 int luat_vfs_ec618_feof(void* userdata, FILE* stream) {
-    //int ret = OsaFsize(stream) == OsaFseek(stream, 0, SEEK_CUR);
-    //DBG("luat_fs_feof fd=%ld size=%ld pos=%ld ret=%ld", stream, OsaFsize(stream), OsaFseek(stream, 0, SEEK_CUR), ret);
-    //return ret;
     return LFS_fileTell((lfs_file_t *)stream) == LFS_fileSize((lfs_file_t *)stream) ? 1 : 0;
 }
 int luat_vfs_ec618_ferror(void* userdata, FILE *stream) {
     return 0;
 }
 size_t luat_vfs_ec618_fread(void* userdata, void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    char *data = (char*)ptr;
-    size_t t = OsaFread(data, size, nmemb, stream);
+    size_t t = LFS_fileRead((lfs_file_t*)stream, ptr, size * nmemb);
     //DBG("luat_fs_fread fd=%p size=%ld nmemb=%ld ret=%ld", stream, size, nmemb, t);
     //DBG("luat_fs_fread data[0-7] %p %X %X %X %X %X %X %X %X", data, *(data), *(data+1), *(data+2), *(data+3), *(data+4), *(data+5), *(data+6), *(data+7));
     return t;
 }
 size_t luat_vfs_ec618_fwrite(void* userdata, const void *ptr, size_t size, size_t nmemb, FILE *stream) {
     //DBG("luat_fs_fwrite fd=%p size=%ld nmemb=%ld", stream, size, nmemb);
-    return OsaFwrite((void*)ptr, size, nmemb, stream);
+    return LFS_fileWrite((lfs_file_t*)stream, ptr, size * nmemb);
 }
 int luat_vfs_ec618_remove(void* userdata, const char *filename) {
-    return OsaFremove(filename);
+    const char* dst = check_path(filename);
+    if (dst == NULL)
+        return 0;
+    return LFS_remove(dst);
 }
 int luat_vfs_ec618_rename(void* userdata, const char *old_filename, const char *new_filename) {
-    return -1;
+    const char* src = check_path(old_filename);
+    if (src == NULL)
+        return 0;
+    const char* dst = check_path(new_filename);
+    if (dst == NULL)
+        return 0;
+    return LFS_rename(src, dst);
 }
 int luat_vfs_ec618_fexist(void* userdata, const char *filename) {
-    FILE* fd = luat_vfs_ec618_fopen(userdata, filename, "rb");
-    if (fd) {
-        luat_vfs_ec618_fclose(userdata, fd);
+    const char* dst = check_path(filename);
+    if (dst == NULL)
+        return 0;
+    lfs_file_t file = {0};
+    int ret = LFS_fileOpen(&file, dst, LFS_O_RDONLY);
+    if (ret == LFS_ERR_OK) {
+        LFS_fileClose(&file);
         return 1;
     }
     return 0;
 }
 
 size_t luat_vfs_ec618_fsize(void* userdata, const char *filename) {
-    FILE* fd = OsaFopen(filename, "rb");
-    if (fd) {
-        size_t sz = LFS_fileSize((lfs_file_t *)fd);
-        OsaFclose(fd);
+    const char* dst = check_path(filename);
+    if (dst == NULL)
+        return 0;
+    lfs_file_t file = {0};
+    int ret = LFS_fileOpen(&file, dst, LFS_O_RDONLY);
+    if (ret == LFS_ERR_OK) {
+        size_t sz = LFS_fileSize(&file);
+        LFS_fileClose(&file);
         return sz;
     }
     return 0;
 }
 
+int luat_vfs_ec618_truncate(void* userdata, const char* filename, size_t len) {
+    const char* dst = check_path(filename);
+    if (dst == NULL)
+        return -1;
+    lfs_file_t file = {0};
+    int ret = LFS_fileOpen(&file, dst, LFS_O_RDWR);
+    if (ret != LFS_ERR_OK) {
+        return -2;
+    }
+    ret = LFS_fileTruncate(&file, len);
+    LFS_fileClose(&file);
+    return ret;
+}
+
 int luat_vfs_ec618_mkfs(void* userdata, luat_fs_conf_t *conf) {
-    DBG("not support yet : mkfs");
+    //DBG("not support yet : mkfs");
     return -1;
 }
 int luat_vfs_ec618_mount(void** userdata, luat_fs_conf_t *conf) {
@@ -118,20 +218,75 @@ int luat_vfs_ec618_umount(void* userdata, luat_fs_conf_t *conf) {
 }
 
 int luat_vfs_ec618_mkdir(void* userdata, char const* _DirName) {
-    DBG("not support yet : mkdir");
+    //DBG("not support yet : mkdir");
     return -1;
 }
 int luat_vfs_ec618_rmdir(void* userdata, char const* _DirName) {
-    return LFS_remove(_DirName);
+    //DBG("not support yet : rmdir");
+    return -1;
+}
+
+int luat_vfs_ec618_lsdir(void* userdata, char const* dir_name, luat_fs_dirent_t* ents, size_t offset, size_t len) {
+    int ret , num = 0;
+    lfs_dir_t *dir;
+    struct lfs_info info = {0};
+    if (dir_name == NULL || strlen(dir_name) == 0) {
+        return 0;
+    }
+    // if (fs->filecount > offset) {
+        // if (offset + len > fs->filecount)
+            // len = fs->filecount - offset;
+        dir = luat_heap_malloc(sizeof(lfs_dir_t));
+        if (dir == NULL) {
+            // LLOGE("out of memory when lsdir");
+            return 0;
+        }
+        ret = LFS_dirOpen(dir, ""); // 固定值, 因为不支持文件夹
+        if (ret < 0) {
+            luat_heap_free(dir);
+            // LLOGE("no such dir %s _DirName");
+            return 0;
+        }
+
+        // TODO 使用seek/tell组合更快更省
+        for (size_t i = 0; i < offset; i++)
+        {
+            ret = LFS_dirRead(dir, &info);
+            if (ret <= 0) {
+                LFS_dirClose(dir);
+                luat_heap_free(dir);
+                return 0;
+            }
+        }
+
+        while (num < len)
+        {
+            ret = LFS_dirRead(dir, &info);
+            if (ret < 0) {
+                LFS_dirClose(dir);
+                luat_heap_free(dir);
+                return 0;
+            }
+            if (ret == 0) {
+                break;
+            }
+            if (info.type == 2 && (memcmp(info.name, ".", 2) !=0 ||memcmp(info.name, "..", 3)!=0))
+                continue;
+            ents[num].d_type = info.type - 1; // lfs file =1, dir=2
+            strcpy(ents[num].d_name, info.name);
+            num++;
+        }
+        LFS_dirClose(dir);
+        luat_heap_free(dir);
+        return num;
+    // }
+    // return 0;
 }
 
 int luat_vfs_ec618_info(void* userdata, const char* path, luat_fs_info_t *conf) {
-    if (strcmp("/", path)) {
-        DBG("not support path %s", path);
-        return -2;
-    }
-    lfs_status_t status;
-    if (!LFS_statfs(&status)) {
+    lfs_status_t status = {0};
+    int ret = LFS_statfs(&status);
+    if (ret == LFS_ERR_OK) {
         conf->total_block = status.total_block;
         conf->block_used = status.block_used / status.block_size + 1;
         conf->block_size = status.block_size;
@@ -140,12 +295,13 @@ int luat_vfs_ec618_info(void* userdata, const char* path, luat_fs_info_t *conf) 
         conf->filesystem[4] = 0;
         return 0;
     }
-    else {
-        DBG("LFS_Statfs return != 0");
-    }
+    // else {
+    //     DBG("LFS_Statfs return %d", ret);
+    // }
     return -1;
 }
 
+#ifdef LUAT_USE_FS_VFS
 
 #define T(name) .name = luat_vfs_ec618_##name
 const struct luat_vfs_filesystem vfs_fs_ec618 = {
@@ -160,7 +316,8 @@ const struct luat_vfs_filesystem vfs_fs_ec618 = {
         T(rename),
         T(fsize),
         T(fexist),
-        T(info)
+        T(info),
+        T(lsdir)
     },
     .fopts = {
         T(fopen),
@@ -217,145 +374,83 @@ int luat_fs_init(void) {
 
 #else
 
-static inline const char* pwrap(const char* path) {
-    if (path == NULL)
-        return NULL;
-    if (path[0] == '/')
-        return path + 1;
-    return path;
-} 
-
 FILE* luat_fs_fopen(const char *filename, const char *mode) {
-    FILE* f = (FILE*)OsaFopen(pwrap(filename), mode);
-    //DBG("luat_fs_fopen %s %s %p", filename, mode, f);
-    return f;
+    return luat_vfs_ec618_fopen(NULL, filename, mode);
 }
 
 int luat_fs_getc(FILE* stream) {
-    char buff[1];
-    buff[0] = 0;
-    OsaFread(buff, 1, 1, stream);
-    return buff[0];
+    return luat_vfs_ec618_getc(NULL, stream);
 }
 
 int luat_fs_fseek(FILE* stream, long int offset, int origin) {
-    //DBG("luat_fs_fseek fd=%p offset=%ld ori=%ld", stream, offset, origin);
-    return OsaFseek(stream, offset, origin);
+    return luat_vfs_ec618_fseek(NULL, stream, offset, origin);
 }
 
 int luat_fs_ftell(FILE* stream) {
-    //DBG("luat_fs_ftell fd=%ld", stream);
-    //return OsaFseek(stream, 0, SEEK_CUR);
-    return LFS_fileTell((lfs_file_t *)stream);
+    return luat_vfs_ec618_ftell(NULL, stream);
 }
 
 int luat_fs_fclose(FILE* stream) {
-    //DBG("luat_fs_fclose fd=%p", stream);
-    return OsaFclose(stream);
+    return luat_vfs_ec618_fclose(NULL, stream);
 }
+
 int luat_fs_feof(FILE* stream) {
-    //int ret = OsaFsize(stream) == OsaFseek(stream, 0, SEEK_CUR);
-    //DBG("luat_fs_feof fd=%ld size=%ld pos=%ld ret=%ld", stream, OsaFsize(stream), OsaFseek(stream, 0, SEEK_CUR), ret);
-    //return ret;
-    return LFS_fileTell((lfs_file_t *)stream) == LFS_fileSize((lfs_file_t *)stream) ? 1 : 0;
+    return luat_vfs_ec618_feof(NULL, stream);
 }
+
 int luat_fs_ferror(FILE *stream) {
-    return 0;
+    return luat_vfs_ec618_ferror(NULL, stream);
 }
+
+
 size_t luat_fs_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    char *data = (char*)ptr;
-    size_t t = OsaFread(data, size, nmemb, stream);
-    //DBG("luat_fs_fread fd=%p size=%ld nmemb=%ld ret=%ld", stream, size, nmemb, t);
-    //DBG("luat_fs_fread data[0-7] %p %X %X %X %X %X %X %X %X", data, *(data), *(data+1), *(data+2), *(data+3), *(data+4), *(data+5), *(data+6), *(data+7));
-    return t;
+    return luat_vfs_ec618_fread(NULL, ptr, size, nmemb, stream);
 }
+
 size_t luat_fs_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    //DBG("luat_fs_fwrite fd=%p size=%ld nmemb=%ld", stream, size, nmemb);
-    return OsaFwrite((void*)ptr, size, nmemb, stream);
+    return luat_vfs_ec618_fwrite(NULL, ptr, size, nmemb, stream);
 }
+
 int luat_fs_remove(const char *filename) {
-    return OsaFremove(pwrap(filename));
+    return luat_vfs_ec618_remove(NULL, filename);
 }
+
 int luat_fs_rename(const char *old_filename, const char *new_filename) {
-    return LFS_rename(pwrap(old_filename), pwrap(new_filename));
+    return luat_vfs_ec618_rename(NULL, old_filename, new_filename);
 }
-int luat_fs_fexist(const char *filename) {
-    FILE* fd = luat_fs_fopen(pwrap(filename), "rb");
-    if (fd) {
-        luat_fs_fclose(fd);
-        return 1;
-    }
-    return 0;
-}
+
 
 size_t luat_fs_fsize(const char *filename) {
-    FILE* fd = OsaFopen(pwrap(filename), "rb");
-    if (fd) {
-        size_t sz = LFS_fileSize((lfs_file_t *)fd);
-        OsaFclose(fd);
-        return sz;
-    }
-    return 0;
+    return luat_vfs_ec618_fsize(NULL, filename);
 }
 
-int luat_fs_ftruncate(FILE* fp, size_t len) {
-    return LFS_fileTruncate(fp, len);
+int luat_fs_fexist(const char *filename) {
+    return luat_vfs_ec618_fexist(NULL, filename);
 }
+
+// int luat_fs_ftruncate(FILE* fp, size_t len) {
+
+// }
+
 
 int luat_fs_truncate(const char* filename, size_t len) {
-    lfs_file_t file = {0};
-    int ret = LFS_fileOpen(&file, pwrap(filename), LFS_O_RDWR);
-    if (ret == 0) {
-        LFS_fileTruncate(&file, len);
-        LFS_fileClose(&file);
-        return len;
-    }
-    return 0;
+    return luat_vfs_ec618_truncate(NULL, filename, len);
 }
 
-int luat_fs_mkfs(luat_fs_conf_t *conf) {
-    DBG("not support yet : mkfs");
-    return -1;
-}
-int luat_fs_mount(luat_fs_conf_t *conf) {
-    //DBG("not support yet : mount");
-    return 0;
-}
-int luat_fs_umount(luat_fs_conf_t *conf) {
-    //DBG("not support yet : umount");
-    return 0;
-}
+// int luat_fs_readline(char * buf, int bufsize, FILE * stream);
+
+// 文件夹相关的API
 
 int luat_fs_mkdir(char const* dir) {
-    DBG("not support yet : mkdir");
-    return -1;
-}
-int luat_fs_rmdir(char const* dir) {
-    if (dir == NULL || (strlen(dir) == 1 && dir[0] == '/')) {
-        return 0;
-    }
-    return LFS_remove(pwrap(dir));
+    return luat_vfs_ec618_mkdir(NULL, dir);
 }
 
-int luat_fs_info(const char* path, luat_fs_info_t *conf) {
-    if (strcmp("/", path)) {
-        DBG("not support path %s", path);
-        return -2;
-    }
-    lfs_status_t status;
-    if (!LFS_statfs(&status)) {
-        conf->total_block = status.total_block;
-        conf->block_used = status.block_used / status.block_size + 1;
-        conf->block_size = status.block_size;
-        conf->type = 1; // 片上FLASH
-        memcpy(conf->filesystem, "lfs", 3);
-        conf->filesystem[4] = 0;
-        return 0;
-    }
-    else {
-        DBG("LFS_Statfs return != 0");
-    }
-    return -1;
+int luat_fs_rmdir(char const* dir) {
+    return luat_vfs_ec618_rmdir(NULL, dir);
+}
+
+int luat_fs_lsdir(char const* dir, luat_fs_dirent_t* ents, size_t offset, size_t len) {
+    return luat_vfs_ec618_lsdir(NULL, dir, ents, offset, len);
 }
 
 int luat_fs_init(void) {
