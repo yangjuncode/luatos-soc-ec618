@@ -239,7 +239,8 @@ static void cjson_demo_task(void *arg)
 
 static void task_demoE_init(void)
 {
-	luat_rtos_task_create(NULL, 4*1024, 50, "cjson", cjson_demo_task, NULL, 0);
+	luat_rtos_task_handle handle;
+	luat_rtos_task_create(&handle, 4*1024, 50, "cjson", cjson_demo_task, NULL, 0);
 }
 
 //启动hw_demoA_init，启动位置硬件初始1级

@@ -58,7 +58,8 @@ static void flash_example(void *param)
 
 static void task_demoE_init(void)
 {
-	luat_rtos_task_create(NULL, 4*1024, 50, "flash", flash_example, NULL, 0);
+	luat_rtos_task_handle handle;
+	luat_rtos_task_create(&handle, 4*1024, 50, "flash", flash_example, NULL, 0);
 }
 
 
