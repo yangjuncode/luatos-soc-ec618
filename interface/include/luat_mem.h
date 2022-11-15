@@ -29,6 +29,8 @@ void  luat_heap_free(void* ptr);
 void* luat_heap_realloc(void* ptr, size_t len);
 void* luat_heap_calloc(size_t count, size_t _size);
 
+void luat_meminfo_sys(size_t* total, size_t* used, size_t* max_used);
+
 
 #define LUAT_MEM_MALLOC luat_heap_malloc
 #define LUAT_MEM_FREE luat_heap_free
