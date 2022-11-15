@@ -12,7 +12,7 @@
 
 #include "ec618.h"
 #include "Driver_Common.h"
-#include "onewire.h"
+#include "oneWire.h"
 
 /**
   \addtogroup eepRom_interface_gr

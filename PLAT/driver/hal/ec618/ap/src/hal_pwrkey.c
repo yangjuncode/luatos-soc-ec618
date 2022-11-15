@@ -23,7 +23,7 @@
 #include <string.h>
 #include "hal_pwrkey.h"
 #include "ec618.h"
-#include "freertos.h"
+#include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include "queue.h"
 #include "exception_process.h"

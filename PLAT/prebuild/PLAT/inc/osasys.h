@@ -19,7 +19,7 @@
 #include "debug_trace.h"
 #include "cmsis_compiler.h"
 #include "time.h"
-#include "driver_common.h"
+#include "Driver_Common.h"
 #include "os_common.h"
 #include DEBUG_LOG_HEADER_FILE
 

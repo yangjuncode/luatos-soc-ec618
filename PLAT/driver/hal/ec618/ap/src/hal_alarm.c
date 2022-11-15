@@ -23,7 +23,7 @@
 #include "hal_alarm.h"
 #include DEBUG_LOG_HEADER_FILE
 #include "alarm.h"
-#include "freertos.h"
+#include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include "queue.h"
 #include "ic.h"

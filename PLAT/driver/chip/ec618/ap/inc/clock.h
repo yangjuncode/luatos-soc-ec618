@@ -11,7 +11,7 @@
 #define _CLOCK_EC618_H
 
 #include "ec618.h"
-#include "Driver_common.h"
+#include "Driver_Common.h"
 
 
 /**

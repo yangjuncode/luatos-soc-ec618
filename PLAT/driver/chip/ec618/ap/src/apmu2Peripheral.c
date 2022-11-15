@@ -1,6 +1,6 @@
 #include "ic.h"
 #include "apmu2Peripheral.h"
-#include "rte_device.h"
+#include "RTE_Device.h"
 #include "timer.h"
 #include "clock.h"
 #include DEBUG_LOG_HEADER_FILE

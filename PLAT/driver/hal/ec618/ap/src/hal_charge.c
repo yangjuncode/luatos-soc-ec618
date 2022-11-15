@@ -22,7 +22,7 @@
 #include <string.h>
 #include "hal_charge.h"
 #include"ec618.h"
-#include "freertos.h"
+#include "FreeRTOS.h"
 #include DEBUG_LOG_HEADER_FILE
 #include "cmsis_os2.h"
 
